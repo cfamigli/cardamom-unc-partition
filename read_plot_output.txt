@@ -1,0 +1,8 @@
+python3 read_plot_output.py 809 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 811 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 831 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 400 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 101 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 1000 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 1003 SUBSET_INPUT 3 1000000
+python3 read_plot_output.py 1010 SUBSET_INPUT 3 1000000
