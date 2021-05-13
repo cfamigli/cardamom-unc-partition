@@ -55,9 +55,6 @@ def main():
     
     # remove 101, temporary until 102-->101
     models.remove('102')
-    models.remove('831')
-    models.remove('809')
-    models.remove('1003')
     os.chdir(cur_dir)
     
     # set lists of variables and pixels
