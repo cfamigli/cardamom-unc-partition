@@ -101,6 +101,7 @@ def edit_101(infile, outfile, ID, inds_shift, inds_del):
 
 def main():
     model_id_start = sys.argv[1]
+    model_id_target = sys.argv[2]
     
     cur_dir = os.getcwd() + '/'
     infile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longruns/cbf/'
@@ -108,11 +109,11 @@ def main():
     outfile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longadapted/'
     
     os.chdir(infile_dir)
-    files = glob.glob('*2224*.cbf')
+    files = glob.glob('*.cbf')
     
     for file in files:
-        print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])['OBS']['ABGB'])
-        '''print(file)
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])['ID'])
+        print(file)
         cbf_long = rwb.read_cbf_file(file)
         
         cbf_compare = rwb.read_cbf_file(glob.glob(cur_dir+compare_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])
@@ -121,10 +122,10 @@ def main():
         
         cbf_out = copy.deepcopy(cbf_long)
         
-        cbf_out['ID'] = model_id_start
+        cbf_out['ID'] = model_id_target
         cbf_out['nodays'] = len(cbf_long['MET'][ind_doy_start_long:,0])
         
-        if int(model_id_start)>400:
+        if int(model_id_target)>400:
             cbf_out['MET'] = cbf_out['MET'][ind_doy_start_long:,:]
         else:
             cbf_out['MET'] = cbf_out['MET'][ind_doy_start_long:,:7]
@@ -141,16 +142,24 @@ def main():
         parpriorout = np.ones(parprior.shape)*-9999.
         parprioruncout = np.ones(parpriorunc.shape)*-9999.
         
-        if int(model_id_start)>102:
-            parpriorout[1] = parprior[1]
-            parpriorout[10] = 17.5
-            parpriorout[11] = parprior[10]
-            parpriorout[14] = parprior[13]
-            
-            parprioruncout[1] = parpriorunc[1]
-            parprioruncout[10] = 1.5
-            parprioruncout[11] = parpriorunc[10]
-            parprioruncout[14] = parpriorunc[13]
+        if int(model_id_target)>102:
+            if int(model_id_target)==900:
+                parpriorout[1] = parprior[1]
+                parpriorout[10] = 17.5
+                
+                parprioruncout[1] = parpriorunc[1]
+                parprioruncout[10] = 1.5
+                
+            else:
+                parpriorout[1] = parprior[1]
+                parpriorout[10] = 17.5
+                parpriorout[11] = parprior[10]
+                parpriorout[14] = parprior[13]
+                
+                parprioruncout[1] = parpriorunc[1]
+                parprioruncout[10] = 1.5
+                parprioruncout[11] = parpriorunc[10]
+                parprioruncout[14] = parpriorunc[13]
         else:
             parpriorout[1] = parprior[1]
             parpriorout[4] = 17.5
@@ -165,7 +174,7 @@ def main():
         cbf_out['PARPRIORS'] = parpriorout
         cbf_out['PARPRIORUNC'] = parprioruncout
         
-        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_start+'/'+file)'''
+        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)
         
 
     '''model_id_target = ['811','400','831','1003','1000','1010','101','102']
