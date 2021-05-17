@@ -39,13 +39,13 @@ def main():
     assim_type = '_longadapted'
     
     cur_dir = os.getcwd()
-    mdf_dir = '../../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_MDF/'
-    runmodel_dir = '../../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_GENERAL/'
+    mdf_dir = '../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_MDF/'
+    runmodel_dir = '../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_GENERAL/'
     cbf_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf'+assim_type+'/' + model_id + '/'
-    cbr_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbr'+assim_type+'/' + model_id + '/'
-    output_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/output'+assim_type+'/' + model_id + '/'
+    cbr_dir = '../../../../../scratch/users/cfamigli/cardamom/files/cbr'+assim_type+'/' + model_id + '/'
+    output_dir = '../../../../../scratch/users/cfamigli/cardamom/files/output'+assim_type+'/' + model_id + '/'
     
-    n_iterations = '1000000' 
+    n_iterations = '100000' 
     n_chains = 2
     if mcmc_id=='119':
         frac_save_out = str(int(int(n_iterations)/500))
@@ -65,15 +65,15 @@ def main():
     forward_txt_file = open('forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '.txt', 'w')
     for cbf_file in cbf_files:
          for chain in range(1,n_chains+1):
-             assim_txt_file.write('%sCARDAMOM_MDF.exe %s%s %s%s %s 0 %s 0.001 %s 1000\n' % (mdf_dir, cbf_dir, cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.cbr', n_iterations, frac_save_out, mcmc_id))
-             forward_txt_file.write('%sCARDAMOM_RUN_MODEL.exe %s%s %s%s %s%s %s%s %s%s %s%s\n' % (runmodel_dir, cbf_dir, cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.cbr', 
+             assim_txt_file.write('%sCARDAMOM_MDF.exe %s%s %s%s %s 0 %s 0.001 %s 1000\n' % (mdf_dir, cbf_dir[3:], cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.cbr', n_iterations, frac_save_out, mcmc_id))
+             forward_txt_file.write('%sCARDAMOM_RUN_MODEL.exe %s%s %s%s %s%s %s%s %s%s %s%s\n' % (runmodel_dir, cbf_dir[3:], cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.cbr', 
                 output_dir, 'fluxfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin', output_dir, 'poolfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin', 
                 output_dir, 'edcdfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin', output_dir, 'probfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin'))
     assim_txt_file.close()
     forward_txt_file.close()
     
     assim_sh_file = open('assimilation_list_' + model_id + '_' + run_type + '_MCMC'+mcmc_id + '.sh', 'w')
-    fill_in_sh(assim_sh_file, array_size=len(cbf_files)*n_chains, n_hours=18, txt_file='assimilation_list_' + model_id + '_' + run_type + '_MCMC'+mcmc_id + '.txt')
+    fill_in_sh(assim_sh_file, array_size=len(cbf_files)*n_chains, n_hours=3, txt_file='assimilation_list_' + model_id + '_' + run_type + '_MCMC'+mcmc_id + '.txt')
     
     forward_sh_file = open('forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '.sh', 'w')
     fill_in_sh(forward_sh_file, array_size=len(cbf_files)*n_chains, n_hours=1, txt_file='forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '.txt')

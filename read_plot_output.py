@@ -18,17 +18,18 @@ def get_parnames(par_dir, model_id):
         parnames = []
     return parnames
     
-def get_nofluxes_nopools_leaffall(model_id):
+def get_nofluxes_nopools_lma(model_id):
     return {
-        '809': (30,7,15),
-        '811': (30,7,15),
-        '831': (30,7,15),
-        '101': (28,3,9),
-        '102': (28,3,9),
-       '1003': (33,8,15),
-       '400': (28,6,15),
-       '1010': (43,8,15),
-       '1000': (32,8,15)
+        '809': (30,7,16),
+        '811': (30,7,16),
+        '831': (30,7,16),
+        '101': (28,3,10),
+        '102': (28,3,10),
+       '1003': (33,8,16),
+       '400': (28,6,16),
+       '1010': (43,8,16),
+       '1000': (32,8,16),
+       '900': (29,6,16)
     }[model_id]
     
 def find_all_chains(file_list, pixel):
@@ -95,9 +96,9 @@ def main():
             cbr_pixel = np.copy(cbr_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((cbr_pixel, cbr_chain), axis=0)
             basic_plots.plot_par_histograms(cbr_chain, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model_id+'_'+pixel_chain[:-3]+'png')
             
-            flux_chain = rwb.readbinarymat(cur_dir + output_dir + 'fluxfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays'], get_nofluxes_nopools_leaffall(model_id)[0]])
-            pool_chain = rwb.readbinarymat(cur_dir + output_dir + 'poolfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays']+1, get_nofluxes_nopools_leaffall(model_id)[1]])
-            basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_chain, flux_chain, pool_chain, get_nofluxes_nopools_leaffall(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-3]+'png')
+            flux_chain = rwb.readbinarymat(cur_dir + output_dir + 'fluxfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays'], get_nofluxes_nopools_lma(model_id)[0]])
+            pool_chain = rwb.readbinarymat(cur_dir + output_dir + 'poolfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays']+1, get_nofluxes_nopools_lma(model_id)[1]])
+            basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_chain, flux_chain, pool_chain, get_nofluxes_nopools_lma(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-3]+'png')
 
             flux_pixel = np.copy(flux_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((flux_pixel, flux_chain), axis=0)
             pool_pixel = np.copy(pool_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((pool_pixel, pool_chain), axis=0)
@@ -110,7 +111,7 @@ def main():
         print('%i of %i parameters converged' % (sum(gr<1.2), len(parnames)))
             
         basic_plots.plot_par_histograms(cbr_pixel, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model_id+'_'+pixel_chain[:-6]+'.png')    
-        basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, get_nofluxes_nopools_leaffall(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-6]+'.png')
+        basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, get_nofluxes_nopools_lma(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-6]+'.png')
         
     #basic_plots.plot_map(nrows=46, ncols=73, land_pixel_list=[file[-8:-4] for file in glob.glob(cur_dir + cbf_dir + '*.cbf')], 
         #pixel_value_list=pixels, value_list=np.ones(len(pixels)), savepath=cur_dir+plot_dir+'maps/', title='test_pixels.png')

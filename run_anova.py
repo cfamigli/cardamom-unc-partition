@@ -18,15 +18,15 @@ from datetime import date
 from pandas import DataFrame, to_pickle
 import matplotlib
 import matplotlib.pyplot as plt
-from read_plot_output import get_parnames, get_nofluxes_nopools_leaffall, find_all_chains, gelman_rubin
+from read_plot_output import get_parnames, get_nofluxes_nopools_lma, find_all_chains, gelman_rubin
 import basic_plots
 
-def get_output(var, model, flux_data, pool_data, cbr_data, leaf_fall_ind):
+def get_output(var, model, flux_data, pool_data, cbr_data, lma_ind):
     # return relevant output depending on flux or pool input as 'var'
     return {
         'NBE': np.sum(flux_data[:,:,[2,12,13]], axis=2) - flux_data[:,:,0] + flux_data[:,:,16],
         'cumNBE': np.cumsum(np.sum(flux_data[:,:,[2,12,13]], axis=2) - flux_data[:,:,0] + flux_data[:,:,16], axis=1),
-        'LAI': pool_data[:,:,1]/np.expand_dims(cbr_data[:,leaf_fall_ind],1),
+        'LAI': pool_data[:,:,1]/np.expand_dims(cbr_data[:,lma_ind],1),
         'GPP': flux_data[:,:,0],
         'Reco': np.sum(flux_data[:,:,[2,12,13]], axis=2),
         'Rauto': flux_data[:,:,2],
@@ -109,9 +109,9 @@ def main():
                     cbr_pixel = np.copy(cbr_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((cbr_pixel, cbr_chain), axis=0) # concatenate all chain cbrs
                     #basic_plots.plot_par_histograms(cbr_chain, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model+'_'+pixel_chain[:-3]+'png')
                     
-                    flux_chain = rwb.readbinarymat(cur_dir + output_dir + 'fluxfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays'], get_nofluxes_nopools_leaffall(model)[0]])
-                    pool_chain = rwb.readbinarymat(cur_dir + output_dir + 'poolfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays']+1, get_nofluxes_nopools_leaffall(model)[1]])
-                    #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_chain, flux_chain, pool_chain, get_nofluxes_nopools_leaffall(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-3]+'png')
+                    flux_chain = rwb.readbinarymat(cur_dir + output_dir + 'fluxfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays'], get_nofluxes_nopools_lma(model)[0]])
+                    pool_chain = rwb.readbinarymat(cur_dir + output_dir + 'poolfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays']+1, get_nofluxes_nopools_lma(model)[1]])
+                    #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_chain, flux_chain, pool_chain, get_nofluxes_nopools_lma(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-3]+'png')
         
                     flux_pixel = np.copy(flux_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((flux_pixel, flux_chain), axis=0) # concatenate all chain flux outputs
                     pool_pixel = np.copy(pool_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((pool_pixel, pool_chain), axis=0) # concatenate all chain pool outputs
@@ -121,12 +121,12 @@ def main():
                 print('%i of %i parameters converged with GR<%.1f' % (sum(gr<gr_thresh), len(parnames), gr_thresh))
                 
                 #basic_plots.plot_par_histograms(cbr_pixel, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model+'_'+pixel_chain[:-6]+'.png')
-                #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, get_nofluxes_nopools_leaffall(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-6]+'.png')
+                #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, get_nofluxes_nopools_lma(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-6]+'.png')
                 
                 if (sum(gr<gr_thresh)/len(parnames)<.9): # don't include nonconvergent runs in analysis
                     continue
                 else:
-                    fwd_data = get_output(var, model, flux_pixel, pool_pixel, cbr_pixel, get_nofluxes_nopools_leaffall(model)[2]) # get forward data for var
+                    fwd_data = get_output(var, model, flux_pixel, pool_pixel, cbr_pixel, get_nofluxes_nopools_lma(model)[2]) # get forward data for var
                     
                     if len(fwd_data)>0:
                         if fwd_data.shape[1]>nsteps:
