@@ -33,7 +33,7 @@ def plot_par_histograms(cbr_data, parnames=[], savepath='', title=''):
     plt.close()
     return
 
-def plot_flux_pool_timeseries(cbf_data, cbr_data, flux_data, pool_data, leaf_fall_ind, savepath='', title=''):
+def plot_flux_pool_timeseries(cbf_data, cbr_data, flux_data, pool_data, lma_ind, savepath='', title=''):
     nrows = 3
     ncols = 1
     fig, axs = plt.subplots(nrows, ncols)
@@ -47,7 +47,7 @@ def plot_flux_pool_timeseries(cbf_data, cbr_data, flux_data, pool_data, leaf_fal
             pred = flux_data[:,:,0]
         elif flux=='LAI':
             n_steps = cbf_data['nodays'] + 1
-            pred = pool_data[:,:,1]/np.expand_dims(cbr_data[:,leaf_fall_ind],1)
+            pred = pool_data[:,:,1]/np.expand_dims(cbr_data[:,lma_ind],1)
         elif flux=='NBE':
             n_steps = cbf_data['nodays']
             pred = np.sum(flux_data[:,:,[2,12,13]], axis=2) - flux_data[:,:,0] + flux_data[:,:,16]
