@@ -112,7 +112,7 @@ def main():
     files = glob.glob('*.cbf')
     
     for file in files:
-        #print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])['ID'])
+        #print(max(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])['MET'][:,8])) 
         print(file)
         cbf_long = rwb.read_cbf_file(file)
         
@@ -143,7 +143,7 @@ def main():
         parprioruncout = np.ones(parpriorunc.shape)*-9999.
         
         if int(model_id_target)>102:
-            if int(model_id_target)==900:
+            if (int(model_id_target)==900) | (int(model_id_target)==901):
                 parpriorout[1] = parprior[1]
                 parpriorout[10] = 17.5
                 

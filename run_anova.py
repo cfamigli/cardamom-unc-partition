@@ -42,6 +42,13 @@ def remove_outliers(fwd_data):
     for i in range(len(meds)):
         fwd_data[:,i][(fwd_data[:,i]>abs(meds[i]*1e6)) | (fwd_data[:,i]<-1*abs(meds[i]*1e6))] = float('nan')
     return fwd_data
+    
+def remove_below_25_above_75(fwd_data):
+    ub = np.nanpercentile(fwd_data, 75, axis=0)
+    lb = np.nanpercentile(fwd_data, 25, axis=0)
+    for i in range(len(ub)):
+        fwd_data[:,i][(fwd_data[:,i]>ub[i]) | (fwd_data[:,i]<lb[i])] = float('nan')
+    return fwd_data
 
 def main():
     
@@ -99,46 +106,49 @@ def main():
                 pixel_chains.sort()
                 n_chains = len(pixel_chains)
                 
-                cbf_pixel = rwb.read_cbf_file(cur_dir + cbf_dir + pixel_chains[0].partition('_MCMC')[0]+'_'+pixel+'.cbf')
-            
-                cbr_chain_list = []
-                for pixel_chain in pixel_chains:
-                    print(pixel_chain)
-                    cbr_chain = rwb.read_cbr_file(pixel_chain, {'nopars': len(parnames)}) # cbr file for one chain
-                    cbr_chain_list.append(cbr_chain) # list of separate cbrs for each chain, use for gelman rubin
-                    cbr_pixel = np.copy(cbr_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((cbr_pixel, cbr_chain), axis=0) # concatenate all chain cbrs
-                    #basic_plots.plot_par_histograms(cbr_chain, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model+'_'+pixel_chain[:-3]+'png')
-                    
-                    flux_chain = rwb.readbinarymat(cur_dir + output_dir + 'fluxfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays'], get_nofluxes_nopools_lma(model)[0]])
-                    pool_chain = rwb.readbinarymat(cur_dir + output_dir + 'poolfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays']+1, get_nofluxes_nopools_lma(model)[1]])
-                    #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_chain, flux_chain, pool_chain, get_nofluxes_nopools_lma(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-3]+'png')
-        
-                    flux_pixel = np.copy(flux_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((flux_pixel, flux_chain), axis=0) # concatenate all chain flux outputs
-                    pool_pixel = np.copy(pool_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((pool_pixel, pool_chain), axis=0) # concatenate all chain pool outputs
-                    
-                gr = gelman_rubin(cbr_chain_list) # gelman rubin function from matt
-                gr_thresh = 1.2 # below this value parameters are assumed to be convergent
-                print('%i of %i parameters converged with GR<%.1f' % (sum(gr<gr_thresh), len(parnames), gr_thresh))
+                if n_chains>0:
+                    cbf_pixel = rwb.read_cbf_file(cur_dir + cbf_dir + pixel_chains[0].partition('_MCMC')[0]+'_'+pixel+'.cbf')
                 
-                #basic_plots.plot_par_histograms(cbr_pixel, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model+'_'+pixel_chain[:-6]+'.png')
-                #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, get_nofluxes_nopools_lma(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-6]+'.png')
-                
-                if (sum(gr<gr_thresh)/len(parnames)<.9): # don't include nonconvergent runs in analysis
-                    continue
-                else:
-                    fwd_data = get_output(var, model, flux_pixel, pool_pixel, cbr_pixel, get_nofluxes_nopools_lma(model)[2]) # get forward data for var
-                    
-                    if len(fwd_data)>0:
-                        if fwd_data.shape[1]>nsteps:
-                            fwd_data = fwd_data[:,:-1]
+                    cbr_chain_list = []
+                    for pixel_chain in pixel_chains:
+                        print(pixel_chain)
+                        cbr_chain = rwb.read_cbr_file(pixel_chain, {'nopars': len(parnames)}) # cbr file for one chain
+                        cbr_chain_list.append(cbr_chain) # list of separate cbrs for each chain, use for gelman rubin
+                        cbr_pixel = np.copy(cbr_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((cbr_pixel, cbr_chain), axis=0) # concatenate all chain cbrs
+                        #basic_plots.plot_par_histograms(cbr_chain, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model+'_'+pixel_chain[:-3]+'png')
                         
-                        fwd_data = remove_outliers(fwd_data)
-                        # fill medians, upper bounds, and lower bounds
-                        meds[models.index(model), :] = np.nanmedian(fwd_data, axis=0)
-                        ub[models.index(model), :] = np.nanpercentile(fwd_data, 75, axis=0)
-                        lb[models.index(model), :] = np.nanpercentile(fwd_data, 25, axis=0)
-                        Mp += np.nanvar(fwd_data, axis=0) # sum of intra-ensemble variance
-                        n += 1
+                        flux_chain = rwb.readbinarymat(cur_dir + output_dir + 'fluxfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays'], get_nofluxes_nopools_lma(model)[0]])
+                        pool_chain = rwb.readbinarymat(cur_dir + output_dir + 'poolfile_' + pixel_chain[:-3]+'bin', [cbf_pixel['nodays']+1, get_nofluxes_nopools_lma(model)[1]])
+                        #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_chain, flux_chain, pool_chain, get_nofluxes_nopools_lma(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-3]+'png')
+            
+                        flux_pixel = np.copy(flux_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((flux_pixel, flux_chain), axis=0) # concatenate all chain flux outputs
+                        pool_pixel = np.copy(pool_chain) if pixel_chains.index(pixel_chain)==0 else np.concatenate((pool_pixel, pool_chain), axis=0) # concatenate all chain pool outputs
+                        
+                    gr = gelman_rubin(cbr_chain_list) # gelman rubin function from matt
+                    gr_thresh = 1.2 # below this value parameters are assumed to be convergent
+                    print('%i of %i parameters converged with GR<%.1f' % (sum(gr<gr_thresh), len(parnames), gr_thresh))
+                    
+                    #basic_plots.plot_par_histograms(cbr_pixel, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model+'_'+pixel_chain[:-6]+'.png')
+                    #basic_plots.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, get_nofluxes_nopools_lma(model)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model+'_'+pixel_chain[:-6]+'.png')
+                    
+                    if (sum(gr<gr_thresh)/len(parnames)<.9): # don't include nonconvergent runs in analysis
+                        continue
+                    else:
+                        fwd_data = get_output(var, model, flux_pixel, pool_pixel, cbr_pixel, get_nofluxes_nopools_lma(model)[2]) # get forward data for var
+                        
+                        if len(fwd_data)>0:
+                            if fwd_data.shape[1]>nsteps:
+                                fwd_data = fwd_data[:,:-1]
+                            
+                            fwd_data = remove_outliers(fwd_data)
+                            # fill medians, upper bounds, and lower bounds
+                            meds[models.index(model), :] = np.nanmedian(fwd_data, axis=0)
+                            ub[models.index(model), :] = np.nanpercentile(fwd_data, 75, axis=0)
+                            lb[models.index(model), :] = np.nanpercentile(fwd_data, 25, axis=0)
+                            
+                            fwd_data = remove_below_25_above_75(fwd_data) # set values outside of 25th-75th range to nan
+                            Mp += np.nanvar(fwd_data, axis=0) # sum of intra-ensemble variance, only compute on 25th-75th
+                            n += 1
                     
             Ms = np.nanvar(meds, axis=0) # inter-median variance
             Mp = Mp/n if n!=0 else float('nan')

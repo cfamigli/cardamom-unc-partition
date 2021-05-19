@@ -29,7 +29,9 @@ def get_nofluxes_nopools_lma(model_id):
        '400': (28,6,16),
        '1010': (43,8,16),
        '1000': (32,8,16),
-       '900': (29,6,16)
+       '900': (29,6,16),
+       '901': (29,6,16),
+       '1032': (33,8,16)
     }[model_id]
     
 def find_all_chains(file_list, pixel):
