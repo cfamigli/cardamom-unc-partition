@@ -3,9 +3,10 @@
 
 import readwritebinary as rwb
 import numpy as np
-import basic_plots
+import anova_utilities as autil
 import matplotlib
 from matplotlib import pyplot as plt
+from pandas import read_csv
 import glob
 import os
 import sys
@@ -99,6 +100,9 @@ def edit_101(infile, outfile, ID, inds_shift, inds_del):
     rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf, outfile)
     return
 
+def retrieve_nbe_unc(unc_mat, rowcol_mat, rowcol_pix):
+    return unc_mat[rowcol_mat==rowcol_pix]
+
 def main():
     model_id_start = sys.argv[1]
     model_id_target = sys.argv[2]
@@ -111,9 +115,9 @@ def main():
     os.chdir(infile_dir)
     files = glob.glob('*.cbf')
     
-    for file in files:
+    for file in files[:10]:
         #print(max(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])['MET'][:,8])) 
-        print(file)
+        '''print(file)
         cbf_long = rwb.read_cbf_file(file)
         
         cbf_compare = rwb.read_cbf_file(glob.glob(cur_dir+compare_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])
@@ -174,7 +178,7 @@ def main():
         cbf_out['PARPRIORS'] = parpriorout
         cbf_out['PARPRIORUNC'] = parprioruncout
         
-        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)
+        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)'''
         
 
     '''model_id_target = ['811','400','831','1003','1000','1010','101','102']

@@ -248,7 +248,7 @@ def plot_partitioning_grouped(df, group, savepath, savename):
     plt.close()
     return
 
-def plot_spread_v_iter(spread_mat, pixel_list, var_ind, var_name, iter_list, savepath, savename):
+def plot_spread_v_iter(spread_mat, pixel_list, var_ind, var_name, iter_list, metric, savepath, savename):
     # plot ensemble spread versus number of iterations
     
     n_pix = len(pixel_list)
@@ -259,13 +259,52 @@ def plot_spread_v_iter(spread_mat, pixel_list, var_ind, var_name, iter_list, sav
     for pixel in pixel_list:
         p_ind = pixel_list.index(pixel)
         
-        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].plot(spread_mat[p_ind, var_ind, :], c='dodgerblue', linewidth=1.5, marker='o', markersize=5)
-        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xticks(np.arange(len(iter_list)))
-        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xticklabels(iter_list, rotation=90)
+        count = 0
+        col = ['dodgerblue', 'crimson']
+        mcmc = ['DEMCMC', 'MCMC']
+        for el in spread_mat:
+            ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].plot(iter_list[count], el[p_ind, var_ind, :], c=col[count], linewidth=1.5, marker='o', markersize=5, label=mcmc[count])
+            count += 1
+            
+        iter_list_combined = np.unique(np.concatenate(([int(i) for i in iter_list[0]],[int(i) for i in iter_list[1]])))
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xticks(np.arange(len(iter_list_combined)))
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xticklabels(iter_list_combined.tolist(), rotation=90)
         ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xlabel('Number of iterations')
-        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_ylabel('Average ensemble \nspread (' + var_name + ')')
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_ylabel('Average ensemble \nspread (' + var_name + ')') if metric=='spread' else  ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_ylabel('RMSE (' + var_name + ')')
         ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_title('Pixel: ' + pixel)
+            
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.savefig(savepath + '/' + savename + '.pdf')
+    plt.close()
+    return
+
+def plot_conv_v_iter(conv_mat, pixel_list, iter_list, savepath, savename):
+    # plot convergence versus number of iterations
+    
+    n_pix = len(pixel_list)
+    n_col = 5
+    n_row = int(np.ceil(n_pix/n_col))
+    fig, ax = plt.subplots(n_row, n_col, figsize=(n_col*2.5, n_row*3))
+    
+    for pixel in pixel_list:
+        p_ind = pixel_list.index(pixel)
         
+        count = 0
+        col = ['dodgerblue', 'crimson']
+        mcmc = ['DEMCMC', 'MCMC']
+        for el in conv_mat:
+            ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].plot(iter_list[count], el[p_ind, :], c=col[count], linewidth=1.5, marker='o', markersize=5, label=mcmc[count])
+            count += 1
+            
+        iter_list_combined = np.unique(np.concatenate(([int(i) for i in iter_list[0]],[int(i) for i in iter_list[1]])))
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xticks(np.arange(len(iter_list_combined)))
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xticklabels(iter_list_combined.tolist(), rotation=90)
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_xlabel('Number of iterations')
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_ylabel('Percent of parameters \nwith GR<1.2')
+        ax[round((p_ind+1)/n_pix), np.mod(p_ind, n_col)].set_title('Pixel: ' + pixel)
+            
+    plt.legend(loc='best')
     plt.tight_layout()
     plt.savefig(savepath + '/' + savename + '.pdf')
     plt.close()
