@@ -135,7 +135,7 @@ def main():
         autil.plot_map(nrows=46, ncols=73, land_pixel_list=[file[-8:-4] for file in glob.glob(cur_dir + cbf_dir + '*.cbf')], pixel_value_list=pixels, value_list=Mp_pixels, vmin=0, vmax=1, cbar_label='Fraction of variance due to parameters', savepath=cur_dir+plot_dir+'maps/', title=var + assim_type + '_MCMC'+mcmc_id)
         
     print(partitioning.to_string())
-    partitioning.sort_index(axis=1).to_pickle(cur_dir+df_dir+date.today().strftime("%m%d%y")+'.pkl')
+    partitioning.sort_index(axis=1).to_pickle(cur_dir+df_dir+'summary' + assim_type + '_MCMC'+mcmc_id + '_' + date.today().strftime("%m%d%y")+'.pkl')
     autil.plot_partitioning_grouped(partitioning, pixels, savepath=cur_dir+plot_dir+'anova_summary', savename='pixels' + assim_type + '_MCMC'+mcmc_id)
     autil.plot_partitioning_grouped(partitioning, vrs, savepath=cur_dir+plot_dir+'anova_summary', savename='vars' + assim_type + '_MCMC'+mcmc_id)
     

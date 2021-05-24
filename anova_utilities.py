@@ -309,4 +309,27 @@ def plot_conv_v_iter(conv_mat, pixel_list, iter_list, savepath, savename):
     plt.savefig(savepath + '/' + savename + '.pdf')
     plt.close()
     return
+
+def plot_scatter_anova_compare(Mp_list, Ms_list, lbl_list, savepath, savename):
+    # compare Ms and Mp between MCMC approaches
+    fig, ax = plt.subplots(1, 2, figsize=(10,5))
+    ax[0].scatter(Mp_list[0], Mp_list[1], facecolor='cornflowerblue', edgecolor='k', s=100, linewidth=1.5)
+    ax[0].plot((0, 1), 'k-', linewidth=1, zorder=0)
+    ax[0].set_xlim([0,1])
+    ax[0].set_ylim([0,1])
+    ax[0].set_xlabel('Mp ('+lbl_list[0]+')')
+    ax[0].set_ylabel('Mp ('+lbl_list[1]+')')
+    
+    ax[1].scatter(Ms_list[0], Ms_list[1], facecolor='sandybrown', edgecolor='k', s=100, linewidth=1.5)
+    ax[1].plot((0, 1), 'k-', linewidth=1, zorder=0)
+    ax[1].set_xlim([0,1])
+    ax[1].set_ylim([0,1])
+    ax[1].set_xlabel('Ms ('+lbl_list[0]+')')
+    ax[1].set_ylabel('Ms ('+lbl_list[1]+')')
+    
+    plt.tight_layout()
+    plt.savefig(savepath + '/' + savename + '.pdf')
+    plt.close()
+    return
+    
     
