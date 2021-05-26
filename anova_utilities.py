@@ -331,5 +331,21 @@ def plot_scatter_anova_compare(Mp_list, Ms_list, lbl_list, savepath, savename):
     plt.savefig(savepath + '/' + savename + '.pdf')
     plt.close()
     return
+
+def plot_nmodel_test(n, yMs, yMp, savepath, savename):
+    # plot fractions of variance for each subset of models
+    plt.figure(figsize=(4.5,4.5))
+    plt.plot(n, yMs, color='sandybrown', linewidth=1.5, marker='o', markersize=10, label='Ms')
+    plt.plot(n, yMp, color='cornflowerblue', linewidth=1.5, marker='o', markersize=10, label='Mp')
+    plt.title(savename)
+    plt.legend(loc='upper right')
+    plt.xticks(n)
+    plt.ylim([0,1])
+    plt.xlabel('Number of models')
+    plt.ylabel('Fraction of total variance')
+    plt.tight_layout()
+    plt.savefig(savepath + '/' + savename + '.pdf')
+    plt.close()
+    return
     
     
