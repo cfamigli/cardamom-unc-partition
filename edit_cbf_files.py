@@ -110,13 +110,30 @@ def main():
     cur_dir = os.getcwd() + '/'
     infile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longruns/cbf/'
     compare_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf/'
+    
+    mod_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longadapted_wrongobsunc/'
     outfile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longadapted/'
     
     os.chdir(infile_dir)
     files = glob.glob('*.cbf')
     
-    for file in files[:10]:
-        #print(max(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])['MET'][:,8])) 
+    for file in files:
+        print(file)
+        orig = rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0])
+        obsunc = orig['OBSUNC']
+        
+        cbf_longadapted = rwb.read_cbf_file(glob.glob(cur_dir+mod_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])
+        cbf_longadapted['OBSUNC'] = obsunc.copy()
+        
+        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_longadapted, cur_dir+outfile_dir+model_id_target+'/'+file)
+        testout = rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])
+        assert testout['OBSUNC']['NBE']['annual_unc']==0.02
+    
+    
+    
+    #for file in files[:1]:
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0])) 
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])['MET'].shape) 
         '''print(file)
         cbf_long = rwb.read_cbf_file(file)
         
@@ -176,9 +193,11 @@ def main():
             parprioruncout[8] = parpriorunc[13]
             
         cbf_out['PARPRIORS'] = parpriorout
-        cbf_out['PARPRIORUNC'] = parprioruncout
+        cbf_out['PARPRIORUNC'] = parprioruncout'''
         
-        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)'''
+        #print(cbf_out['OBSUNC']['NBE'])
+        
+        #rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)
         
 
     '''model_id_target = ['811','400','831','1003','1000','1010','101','102']

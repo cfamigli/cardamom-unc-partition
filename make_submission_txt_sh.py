@@ -5,26 +5,7 @@ import glob
 import os
 import sys
 from random import sample
-
-def fill_in_sh(sh_file, array_size, n_hours, txt_file):
-    sh_file.write('#!/bin/bash\n')
-    sh_file.write('#SBATCH --nodes=1\n')
-    sh_file.write('#SBATCH -p konings,normal,owners\n')
-    sh_file.write('#SBATCH -t %i:00:00\n' % n_hours)
-    sh_file.write('#SBATCH --mail-type=END,FAIL\n')
-    sh_file.write('#SBATCH --mail-user=cfamigli@stanford.edu\n')
-    sh_file.write('#SBATCH --array=0-%i\n\n' % array_size)
-    
-    sh_file.write('# define the location of the command list file\n')
-    sh_file.write('CMD_LIST=./%s\n\n' % txt_file)
-    
-    sh_file.write('# get the command list index from Slurm\n')
-    sh_file.write('CMD_INDEX=$SLURM_ARRAY_TASK_ID\n\n')
-    
-    sh_file.write('# execute the command\n')
-    sh_file.write('$(sed "${CMD_INDEX}q;d" "$CMD_LIST")\n')
-    sh_file.close()
-    return
+import anova_utilities as autil
 
 def select_cbf_files(all_filenames, pixel_list):
     reduced_list = []
@@ -46,8 +27,10 @@ def main():
     output_dir = '../../../../../scratch/users/cfamigli/cardamom/files/output'+assim_type+'/' + model_id + '/'
     
     n_iterations = sys.argv[4]
-    n_chains = int(sys.argv[5])
-    runtime_assim = int(sys.argv[6])
+    runtime_assim = int(sys.argv[5])
+    n_chains = int(sys.argv[6])
+    chain_num = '_' + sys.argv[7] if n_chains==1 else ''
+        
     if mcmc_id=='119':
         frac_save_out = str(int(int(n_iterations)/500))
     elif mcmc_id=='3':
@@ -62,22 +45,26 @@ def main():
         cbf_files = select_cbf_files(glob.glob('*.cbf'), ['3809','3524','2224','4170','1945','3813','4054','3264','1271','3457'])
     os.chdir(cur_dir + '/../')
         
-    assim_txt_file = open('assimilation_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + '.txt', 'w')
-    forward_txt_file = open('forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + '.txt', 'w')
+    assim_txt_filename = 'assimilation_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
+    assim_txt_file = open(assim_txt_filename, 'w')
+    
+    forward_txt_filename = 'forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
+    forward_txt_file = open(forward_txt_filename, 'w')
     for cbf_file in cbf_files:
          for chain in range(1,n_chains+1):
-             assim_txt_file.write('%sCARDAMOM_MDF.exe %s%s %s%s %s 0 %s 0.001 %s 1000\n' % (mdf_dir, cbf_dir[3:], cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.cbr', n_iterations, frac_save_out, mcmc_id))
-             forward_txt_file.write('%sCARDAMOM_RUN_MODEL.exe %s%s %s%s %s%s %s%s %s%s %s%s\n' % (runmodel_dir, cbf_dir[3:], cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.cbr', 
-                output_dir, 'fluxfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin', output_dir, 'poolfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin', 
-                output_dir, 'edcdfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin', output_dir, 'probfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+'_'+str(chain)+'.bin'))
+             c = chain_num if n_chains==1 else '_'+str(chain)
+             assim_txt_file.write('%sCARDAMOM_MDF.exe %s%s %s%s %s 0 %s 0.001 %s 1000\n' % (mdf_dir, cbf_dir[3:], cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+ c +'.cbr', n_iterations, frac_save_out, mcmc_id))
+             forward_txt_file.write('%sCARDAMOM_RUN_MODEL.exe %s%s %s%s %s%s %s%s %s%s %s%s\n' % (runmodel_dir, cbf_dir[3:], cbf_file, cbr_dir, cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+ c +'.cbr', 
+                output_dir, 'fluxfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+ c +'.bin', output_dir, 'poolfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+ c +'.bin', 
+                output_dir, 'edcdfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+ c +'.bin', output_dir, 'probfile_'+cbf_file[:-8]+'MCMC'+mcmc_id+'_'+n_iterations+'_'+cbf_file[-8:-4]+ c +'.bin'))
     assim_txt_file.close()
     forward_txt_file.close()
     
-    assim_sh_file = open('assimilation_list_' + model_id + '_' + run_type + '_MCMC'+mcmc_id + '_'+n_iterations + '.sh', 'w')
-    fill_in_sh(assim_sh_file, array_size=len(cbf_files)*n_chains, n_hours=runtime_assim, txt_file='assimilation_list_' + model_id + '_' + run_type + '_MCMC'+mcmc_id + '_'+n_iterations + '.txt')
+    assim_sh_file = open(assim_txt_filename[:-3] + 'sh', 'w')
+    autil.fill_in_sh(assim_sh_file, array_size=len(cbf_files)*n_chains, n_hours=runtime_assim, txt_file=assim_txt_filename)
     
-    forward_sh_file = open('forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + '.sh', 'w')
-    fill_in_sh(forward_sh_file, array_size=len(cbf_files)*n_chains, n_hours=1, txt_file='forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + '.txt')
+    forward_sh_file = open(forward_txt_filename[:-3] + 'sh', 'w')
+    autil.fill_in_sh(forward_sh_file, array_size=len(cbf_files)*n_chains, n_hours=1, txt_file=forward_txt_filename)
     
     return
 

@@ -1,7 +1,11 @@
-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Created on Fri Apr 13 15:37:34 2018
+
 @author: gregoryquetin
+
+
 Reading/Writing .cbf binary file
 """
 
@@ -14,12 +18,6 @@ import warnings
 
 MACHDIR = os.path.expanduser("~")
 sys.path.append(MACHDIR + '/repos/scripts/Python/Projects/J5')
-
-
-import readcardamommodel
-
-
-
  
 
 
@@ -47,6 +45,49 @@ def readbinarymat(filename,indims):
     
     return datamat
 
+
+def latlon_to_rowcol(lat,lon):
+    
+    # Vectors for code in file name
+    latspace = np.linspace(-90,90,46)
+    lonspace = np.linspace(-180,180,73)
+    
+    latidx = np.argwhere(latspace == lat)
+    lonidx = np.argwhere(lonspace == lon)
+    
+    if len(latidx) == 0 or len(lonidx) == 0:
+        rowcol = []
+        print('No point at lat = ' + str(lat) + ' or lon = ' + str(lon))
+    
+    else:
+        latnum = latidx[0][0] + 1
+        lonnum = lonidx[0][0] + 1
+        
+        if latnum < 10:
+            latstr = '0'+ str(latnum)
+        else:
+            latstr = str(latnum)
+            
+        if lonnum < 10:
+            lonstr = '0' + str(lonnum)
+        else:
+            lonstr = str(lonnum)
+        
+        rowcol = latstr+lonstr
+        
+    return rowcol
+
+def rowcol_to_latlon(rowcol_str):
+    """
+    Convert GEOCHEM rows and columns to lats and lons. Take in 4 digit string of row/col and spit out
+    """
+
+    # Vectors for code in file name
+    latspace = np.linspace(-90,90,46)
+    lonspace = np.linspace(-180,180,73)
+    lat = latspace[int(rowcol_str[0:2])-1]
+    lon = lonspace[int(rowcol_str[2:])-1]
+    return (lat,lon)
 
 
 def define_cbf_obs_fields(CBF,CBFOBS):
@@ -199,7 +240,7 @@ def read_other_obs_constraints(CBF,OPR,OPRU):
 
 
 
-def read_cbf_file(inputfilename=None):
+def read_cbf_file(inputfilename):
     """
     Adapted from A. Bloom matlab script from 02/11/2018
     %.cbf = (c)ARDAMOM (b)INARY (f)ILE
@@ -210,15 +251,9 @@ def read_cbf_file(inputfilename=None):
         %Last adapted froo A.A. Bloom 2019/07/24
     """
     
-    if inputfilename is None:
-        BD = np.ones(23580)*-9999.0
-        BD[2] = 1164# nodays
-        BD[3] = 9# no of met
-        BD[4] = 11# no of obs
     
-    else:
-        with open(inputfilename, 'rb') as fid:
-            BD = np.fromfile(fid, np.float64)
+    with open(inputfilename, 'rb') as fid:
+        BD = np.fromfile(fid, np.float64)
         
     # https://www.mathworks.com/help/matlab/ref/fwrite.html
     # https://www.mathworks.com/help/matlab/numeric-types.html
@@ -302,8 +337,8 @@ def read_cbf_file(inputfilename=None):
     
     #Retaining "OTHERPRIORS" for now
     CBF['RAW'] = {}
-    CBF['RAW']['OTHERPRIORS']=np.expand_dims(OPR,axis=1)
-    CBF['RAW']['OTHERPRIORSUNC']=np.expand_dims(OPRU,axis=1);
+    CBF['RAW']['OTHERPRIORS']=OPR;
+    CBF['RAW']['OTHERPRIORSUNC']=OPRU;
     CBF['RAW']['info']='Raw inputs/outputs as stored in CBF binary structure';
     CBF['RAW']['details']='For completeness & development purpose only; When re-writing CBF to file, these are over-written by CBF.OBS, etc.';
 
@@ -567,14 +602,14 @@ def CARDAMOM_WRITE_BINARY_FILEFORMAT(CBF,outfilename):
     
     PR = CBF['PARPRIORS']
     PRU = CBF['PARPRIORUNC']
-    OPR=CBF['RAW']['OTHERPRIORS']
-    OPRU=CBF['RAW']['OTHERPRIORSUNC']
+    OPR=np.expand_dims(CBF['RAW']['OTHERPRIORS'],axis=1);
+    OPRU=np.expand_dims(CBF['RAW']['OTHERPRIORSUNC'],axis=1);
     
 
     #Number of timesteps
     nodays=np.shape(CBF['MET'])[0]
     #Number of met fields
-    nomet=np.shape(CBF['MET'])[1]
+    nomet=np.shape(CBF['MET'])[1];
     #
     CBF['OBS']=compile_cbf_obs_fields(CBF)
     #Number of time-resolved observations
@@ -603,16 +638,6 @@ def CARDAMOM_WRITE_BINARY_FILEFORMAT(CBF,outfilename):
                                       CBF['EDC'],
                                       CBF['EDCDIAG']]),axis=1)
     
-    
-    
-    # EDCDIAG - set "on" by default
-    # if isfield(MD,'EDCDIAG')==0;SD(7)=1;end
-
-    #Write time-invariant terms
-    SD,OPRU=write_obs_uncertainty_fields(CBF,SD,OPRU)
-
-    #Write other obs constraints
-    OPR,OPRU=write_other_obs_constraints(CBF,OPR,OPRU)
     
     
     # Prescribe reference met
@@ -652,11 +677,29 @@ def CARDAMOM_READ_OUTPUT(cbffile,cbrfile,fluxfile,poolfile,probfile=[],baddata =
     nofluxes = 30
     nopools = 7
     CBF = read_cbf_file(cbffile)
-    nopars = len(readcardamommodel.get_parnames(int(CBF['ID']),output='shortnames'))
-    model_info = {'nopars':nopars,
-                  'latterhalf':0}
     
-    PARS = read_cbr_file(cbrfile,INFO = model_info)
+    model_info = {'803':{'nopars':32,
+            'latterhalf':0},
+                  '809':{'nopars':33,
+                         'latterhalf':0},
+                  '811':{'nopars':33,
+                         'latterhalf':0},
+                  '812':{'nopars':33,
+                         'latterhalf':0},
+                  '813':{'nopars':33,
+                         'latterhalf':0},
+                  '814':{'nopars':33,
+                         'latterhalf':0},
+                  '815':{'nopars':33,
+                         'latterhalf':0},
+                  '819':{'nopars':38,
+                       'latterhalf':0},
+                  '821':{'nopars':36,
+                       'latterhalf':0}
+                }
+    
+    
+    PARS = read_cbr_file(cbrfile,INFO = model_info[str(int(CBF['ID']))])
     nodays = CBF['nodays']
 
     FLUXES = readbinarymat(fluxfile,[nodays,nofluxes])
@@ -689,11 +732,7 @@ def CARDAMOM_READ_OUTPUT(cbffile,cbrfile,fluxfile,poolfile,probfile=[],baddata =
         CBR['NBE'] = CBR['NEE']
     
     # LAI
-    if CBF['ID'] == 821:
-        # Shift location of LMCA for calculation in 821
-        CBR['LAI']=CBR['POOLS'][:,:,1]/np.expand_dims(PARS[:,15],1)
-    else:
-        CBR['LAI']=CBR['POOLS'][:,:,1]/np.expand_dims(PARS[:,16],1)
+    CBR['LAI']=CBR['POOLS'][:,:,1]/np.expand_dims(PARS[:,16],1)
     
     #Water Stress [something to add]
 #        if CBR['POOLS'].shape[-1]>6:
@@ -702,7 +741,7 @@ def CARDAMOM_READ_OUTPUT(cbffile,cbrfile,fluxfile,poolfile,probfile=[],baddata =
 
     return CBR 
 
-def CARDAMOM_READ_OUTPUT_FILEAWARE(cbffile,cbrfiles,outputfiles,cutfrac = 0.5,INFO=[],chaininfoout=None):
+def CARDAMOM_READ_OUTPUT_FILEAWARE(cbffile,cbrfiles,outputfiles,cutfrac = 0.5,INFO=[]):
     
     # Output names present
     namedvars = list(set([outf.split("/")[-1].split("_")[0] for outf in outputfiles]))
@@ -743,7 +782,6 @@ def CARDAMOM_READ_OUTPUT_FILEAWARE(cbffile,cbrfiles,outputfiles,cutfrac = 0.5,IN
     
     runnums = list(np.sort(runnums)) # Keep in the same order as other files
     tmp = {}
-    Nlist = []
     for idx,rn in enumerate(runnums):
         
         cbrfile = headdir_cbr + 'cbr/'+cbrname+'_'+rn+'.cbr'
@@ -760,7 +798,6 @@ def CARDAMOM_READ_OUTPUT_FILEAWARE(cbffile,cbrfiles,outputfiles,cutfrac = 0.5,IN
         
         if CBRtmp is not None:
             N = int(cutfrac*CBRtmp['FLUXES'].shape[0])
-            Nlist.append(CBRtmp['FLUXES'].shape[0] - N)
         else:
             continue
         
@@ -779,12 +816,8 @@ def CARDAMOM_READ_OUTPUT_FILEAWARE(cbffile,cbrfiles,outputfiles,cutfrac = 0.5,IN
     CBRall = {}
     for ky in tmp:
         CBRall[ky] = np.concatenate(tmp[ky],axis=0)
-    
-    if chaininfoout == 'list':
-        return CBRall, Nlist 
-    else:
-        return CBRall
         
+    return CBRall
 
 # %%
 
@@ -812,42 +845,30 @@ if __name__ == '__main__':
     fnbinary = 'cruncep001GCRUN_ossemedian_1526.cbf'
 #    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/p17_long_test3/cruncep/cbf/'
 #    fnbinary = 'cru004GCR003_1997_2016_nbe2002_2042.cbf'
-    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/p18_long/cruncep/cbf/'
-    fnbinary = 'cru004GCR005_1920_2016_nbe2002_2042.cbf'
-
-    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/p18_long/cesmlensbc001/cbf/'
-    fnbinary = 'lbc001GCR005_1920_2016_nbe2002_1623.cbf'
-    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/p18_long/lnsbcco2no001/cbf/'
-    fnbinary = 'bcco2n001GCR005_1920_2016_nbe2002_2042.cbf'
-    
-    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/p20_long/cruncep/cbf/'
-    fnbinary = 'cru004GCR006_1920_2015_nbe2002_2042.cbf'
-    
-    #
-    ## Test file
-    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/harvard_test/lai_bias/cbf/'
-    fnbinary = 'e1a_USHa1_coplai_div100_lwbias100_0000.cbf'
-    
+#    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/p16_full/cruncep/cbf/'
+#    fnbinary = 'cru004GCR005_1920_2016_nbe2002_2042.cbf'
+#    dirbinary = MACHDIR + '/Google Drive/DATA/DALEC/harvard/anthony2/cbf/'
+#    fnbinary = 'e1b_USHa1_8213.cbf'
+#    fnbinary = 'cln001GCR004_1920_2005_nbe1002_3355.cbf'
+#    dirbinary = MACHDIR + '/Google Drive/fromJPL/20191203_CARDAMOM/reexternalnewcardamomrunswithnewmcmcfeedback/'
+#    fnbinary = 'CBF_file_for_GQ_row19col42.cbf'
     inputfilename = dirbinary+fnbinary
-    CBF1 = read_cbf_file(inputfilename)
+    CBF2 = read_cbf_file(inputfilename)
     
 
     #
     # Write a binary .cbf file from a given CBF dictionary
-    fnbinaryout = 'e1a_USHa1_id821_test_coplai_div100_lwbias100_0000.cbf' #'e1b_USHa1_821_0001.cbf'
+    fnbinaryout = 'testtest.cbf' #'e1b_USHa1_821_0001.cbf'
     outfilename = dirbinary+fnbinaryout
-    CARDAMOM_WRITE_BINARY_FILEFORMAT(CBF_new,outfilename)
+    CARDAMOM_WRITE_BINARY_FILEFORMAT(CBF2,outfilename)
     
     
     #
     # Reading a .cbr file
 #    dircbrbinary = MACHDIR + '/Google Drive/DATA/DALEC/p12_mbptest_819/cruncep/cbr/'
 #    fncbrbinary = 'cruncep001GCRUN_NOV127_20_smoothnbe_sifnojflwlai_1997_2016_nbeseaunc100_100_nbeannunc100_2_3313_1.cbr'
-    dircbrbinary = MACHDIR + '/Google Drive/DATA/DALEC/p18_long/cruncep/cbr/'
-    fncbrbinary = 'cru004GCR005_1920_2016_nbe2002_2042_1.cbr'
-    
-    dircbrbinary = MACHDIR + '/Google Drive/DATA/DALEC/harvard_test/lai_bias/cbr/'
-    fncbrbinary = 'e1a_USHa1_id821_test_coplai_div100_lwbias100_0000.cbr'
+    dircbrbinary = MACHDIR + '/Google Drive/DATA/DALEC/p16_long/cruncep/cbr/'
+    fncbrbinary = 'cru004GCR005_1997_2016_nbe2002_2042_1.cbr'
 #    dircbrbinary = MACHDIR + '/Google Drive/DATA/DALEC/p17_long_test3/cruncep/cbr/'
 #    fncbrbinary = 'cru004GCR003_1997_2016_nbe2002_3260_1.cbr'
 #    dircbrbinary = MACHDIR + '/Google Drive/DATA/DALEC/p14_uncmatch/cruncep/cbr/'
@@ -856,7 +877,7 @@ if __name__ == '__main__':
     
     inputfilename_cbr = dircbrbinary + fncbrbinary
     
-    PARS = read_cbr_file(inputfilename_cbr,INFO = {'nopars':36,'latterhalf':0})
+    PARS = read_cbr_file(inputfilename_cbr,INFO = {'nopars':33,'latterhalf':0})
     
     #
     # Reading a list of .cbr files
@@ -877,31 +898,26 @@ if __name__ == '__main__':
 
  
     #%% Open output files
-    testdir = MACHDIR + '/Google Drive/DATA/DALEC/p20_long/cruncep/output/'
-    testcbfdir = MACHDIR + '/Google Drive/DATA/DALEC/p20_long/cruncep/cbf/'
-    testcbrdir = MACHDIR + '/Google Drive/DATA/DALEC/p20_long/cruncep/cbr/'
+    testdir = MACHDIR + '/Google Drive/DATA/DALEC/multipt_test/erainterim/output/'
+    testcbfdir = MACHDIR + '/Google Drive/DATA/DALEC/multipt_test/erainterim/cbf/'
+    testcbrdir = MACHDIR + '/Google Drive/DATA/DALEC/multipt_test/erainterim/cbr/'
     
-    cbfname = 'cru004GCR006_1920_2015_nbe2002_2042.cbf'
+    cbfname = 'GCRUN_NOV17_20_1764.cbf'
     cbffile = testcbfdir + cbfname
     
-    cbrname = 'cru004GCR006_1920_2015_nbe2002_2042_3.cbr'
+    cbrname = 'GCRUN_NOV17_20_1764_1.cbr'
     cbrfile = testcbrdir + cbrname
     
-    fluxname = 'fluxfile_cru004GCR006_1920_2015_nbe2002_2042_3.bin'
+    fluxname = 'fluxfile_GCRUN_NOV17_20_1764_1.bin'
     fluxfile = testdir + fluxname
-    poolname = 'poolfile_cru004GCR006_1920_2015_nbe2002_2042_3.bin'
+    poolname = 'poolfile_GCRUN_NOV17_20_1764_1.bin'
     poolfile = testdir + poolname
-    edcdname = 'edcdfile_cru004GCR006_1920_2015_nbe2002_2042_3.bin'
-    edcdfile = testdir + edcdname
-    probname = 'probfile_cru004GCR006_1920_2015_nbe2002_2042_3.bin'
+    edcname = 'edcdfile_GCRUN_NOV17_20_1764_1.bin'
+    edcfile = testdir + edcname
+    probname = 'probfile_GCRUN_NOV17_20_1764_1.bin'
     probfile = testdir + probname
     
     probfilemat = readbinarymat(probfile,[1])
-    
-    edcdfilemat = readbinarymat(edcdfile,[250,100])
-    
-#    with open(edcdfile, 'rb') as fid:
-#        BD = np.fromfile(fid, np.int32)
     
     CBR = CARDAMOM_READ_OUTPUT(cbffile,cbrfile,fluxfile,poolfile)
     CBRall = CARDAMOM_READ_OUTPUT_FILEAWARE(cbffile)
@@ -941,3 +957,5 @@ if __name__ == '__main__':
     cbffile = testcbfdir + cbfname
     CBF = read_cbf_file(cbffile)       
     
+    
+   

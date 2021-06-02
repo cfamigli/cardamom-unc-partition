@@ -6,6 +6,26 @@ from matplotlib import pyplot as plt
 from matplotlib import colors
 from pandas import DataFrame, read_csv
 
+def fill_in_sh(sh_file, array_size, n_hours, txt_file):
+    sh_file.write('#!/bin/bash\n')
+    sh_file.write('#SBATCH --nodes=1\n')
+    sh_file.write('#SBATCH -p konings,normal,owners\n')
+    sh_file.write('#SBATCH -t %i:00:00\n' % n_hours)
+    sh_file.write('#SBATCH --mail-type=END,FAIL\n')
+    sh_file.write('#SBATCH --mail-user=cfamigli@stanford.edu\n')
+    sh_file.write('#SBATCH --array=0-%i\n\n' % array_size)
+    
+    sh_file.write('# define the location of the command list file\n')
+    sh_file.write('CMD_LIST=./%s\n\n' % txt_file)
+    
+    sh_file.write('# get the command list index from Slurm\n')
+    sh_file.write('CMD_INDEX=$SLURM_ARRAY_TASK_ID\n\n')
+    
+    sh_file.write('# execute the command\n')
+    sh_file.write('$(sed "${CMD_INDEX}q;d" "$CMD_LIST")\n')
+    sh_file.close()
+    return
+
 def subset_df_by_substring(df, subset_str):
     # subset a dataframe by a specified substring
     subset = [row for row in df.index if subset_str in row]
@@ -149,9 +169,12 @@ def plot_flux_pool_timeseries(cbf_data, cbr_data, flux_data, pool_data, lma_ind,
         axs[fluxes.index(flux)].plot(np.nanmedian(pred, axis=0), color='dodgerblue', linewidth=3)
         axs[fluxes.index(flux)].fill_between(range(n_steps), np.nanpercentile(pred, 25, axis=0), 
             np.nanpercentile(pred, 75, axis=0), color='dodgerblue', alpha=0.3)
-        obs = cbf_data['OBS'][flux]
-        obs[obs==-9999] = float('nan')
-        axs[fluxes.index(flux)].plot(obs, linewidth=2, label='Obs',color='k')
+        try:
+            obs = cbf_data['OBS'][flux]
+            obs[obs==-9999] = float('nan')
+            axs[fluxes.index(flux)].plot(obs, linewidth=2, label='Obs',color='k')
+        except:
+            pass
         axs[fluxes.index(flux)].set_ylabel(flux)
         axs[fluxes.index(flux)].set_xlabel('Months')
     
@@ -162,9 +185,13 @@ def plot_flux_pool_timeseries(cbf_data, cbr_data, flux_data, pool_data, lma_ind,
     plt.close()
     return
 
-def plot_map(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=None, vmax=None, cbar_label='', savepath='', title=''):
+def plot_map(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=None, vmax=None, cbar_label='', savepath='', savename=''):
     # set up array for mapping
     # specify number of rows and columns
+    
+    # land_pixel_list is a list of all pixel numbers that cbfs exist for (=all land pixels)
+    # pixel_value_list is a list of the pixels we want to plot (equivalent to land_pixel_list when we are plotting entire globe)
+    # value_list is a list of the values we want to plot, ordered according to pixel_value_list
 
     latspace = np.linspace(-90,90,nrows)
     lonspace = np.linspace(-180,180,ncols)
@@ -189,13 +216,12 @@ def plot_map(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=N
     plt.figure(figsize=(9,6))
     land_cmap = colors.ListedColormap(['gainsboro'])
     plt.imshow(np.flipud(land_arr), cmap=land_cmap, zorder=0)
-    plt.imshow(np.flipud(value_arr), cmap='brg_r', vmin=vmin, vmax=vmax, zorder=1)
+    plt.imshow(np.flipud(value_arr), cmap='spring', vmin=vmin, vmax=vmax, zorder=1)
     plt.axis('off')
     cb = plt.colorbar(fraction=0.046, pad=0.04)
     cb.set_label(cbar_label)
-    plt.title(title)
     plt.tight_layout()
-    plt.savefig(savepath + title + '.png')
+    plt.savefig(savepath + savename + '.png')
     plt.close()
     return
 
