@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors
 from pandas import DataFrame, read_csv
 
-def fill_in_sh(sh_file, array_size, n_hours, txt_file):
+def fill_in_sh(sh_file, array_size, n_hours, txt_file, combined=False):
     sh_file.write('#!/bin/bash\n')
     sh_file.write('#SBATCH --nodes=1\n')
     sh_file.write('#SBATCH -p konings,normal,owners\n')
@@ -22,7 +22,7 @@ def fill_in_sh(sh_file, array_size, n_hours, txt_file):
     sh_file.write('CMD_INDEX=$SLURM_ARRAY_TASK_ID\n\n')
     
     sh_file.write('# execute the command\n')
-    sh_file.write('$(sed "${CMD_INDEX}q;d" "$CMD_LIST")\n')
+    sh_file.write('$(sed "${CMD_INDEX}q;d" "$CMD_LIST")\n') if not combined else sh_file.write('eval $(sed "${CMD_INDEX}q;d" "$CMD_LIST")\n')
     sh_file.close()
     return
 
@@ -30,6 +30,49 @@ def subset_df_by_substring(df, subset_str):
     # subset a dataframe by a specified substring
     subset = [row for row in df.index if subset_str in row]
     return subset
+    
+def latlon_to_rowcol(lat,lon):
+    
+    # Vectors for code in file name
+    latspace = np.linspace(-90,90,46)
+    lonspace = np.linspace(-180,180,73)
+    
+    latidx = np.argwhere(latspace == lat)
+    lonidx = np.argwhere(lonspace == lon)
+
+    latnum = latidx[0][0] + 1
+    lonnum = lonidx[0][0] + 1
+    
+    if latnum < 10:
+        latstr = '0'+ str(latnum)
+    else:
+        latstr = str(latnum)
+        
+    if lonnum < 10:
+        lonstr = '0' + str(lonnum)
+    else:
+        lonstr = str(lonnum)
+    
+    return latstr+lonstr
+
+def rowcol_to_latlon(checkptlist):
+    """
+    Convert GEOCHEM rows and columns to lats and longs
+    """
+    
+    # Vectors for code in file name
+    latspace = np.linspace(-90,90,46)
+    lonspace = np.linspace(-180,180,73)
+    
+    latpts = []
+    lonpts = []
+    for ckpt in checkptlist:
+        
+        latpts.append(latspace[int(ckpt[0:2])-1])
+        lonpts.append(lonspace[int(ckpt[2:])-1])
+    
+    latlonzip = list(zip(latpts,lonpts))
+    return latlonzip
     
 def get_parnames(par_dir, model_id):
     # input model id and get list of parameters from csv
@@ -185,7 +228,7 @@ def plot_flux_pool_timeseries(cbf_data, cbr_data, flux_data, pool_data, lma_ind,
     plt.close()
     return
 
-def plot_map(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=None, vmax=None, cbar_label='', savepath='', savename=''):
+def plot_map(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=None, vmax=None, cmap='spring', cbar_label='', savepath='', savename=''):
     # set up array for mapping
     # specify number of rows and columns
     
@@ -216,7 +259,49 @@ def plot_map(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=N
     plt.figure(figsize=(9,6))
     land_cmap = colors.ListedColormap(['gainsboro'])
     plt.imshow(np.flipud(land_arr), cmap=land_cmap, zorder=0)
-    plt.imshow(np.flipud(value_arr), cmap='spring', vmin=vmin, vmax=vmax, zorder=1)
+    plt.imshow(np.flipud(value_arr), cmap=cmap, vmin=vmin, vmax=vmax, zorder=1)
+    plt.axis('off')
+    cb = plt.colorbar(fraction=0.046, pad=0.04)
+    cb.set_label(cbar_label)
+    plt.tight_layout()
+    plt.savefig(savepath + savename + '.png')
+    plt.close()
+    return
+    
+def plot_map_discrete_cmap(nrows, ncols, land_pixel_list, pixel_value_list, value_list, vmin=None, vmax=None, ncolors=48, cmap='spring', cbar_label='', savepath='', savename=''):
+    # set up array for mapping -- DISCRETE COLORBAR
+    # specify number of rows and columns
+    
+    # land_pixel_list is a list of all pixel numbers that cbfs exist for (=all land pixels)
+    # pixel_value_list is a list of the pixels we want to plot (equivalent to land_pixel_list when we are plotting entire globe)
+    # value_list is a list of the values we want to plot, ordered according to pixel_value_list
+
+    latspace = np.linspace(-90,90,nrows)
+    lonspace = np.linspace(-180,180,ncols)
+
+    lat = np.tile(latspace.reshape(-1,1), (1,len(lonspace)))
+    lon = np.tile(lonspace, (len(latspace),1))
+    value_arr = np.zeros((nrows,ncols))*np.nan
+    land_arr = np.zeros((nrows,ncols))*np.nan
+    
+    for pixel in pixel_value_list:
+        (latpx,lonpx) = rwb.rowcol_to_latlon(pixel)
+        row = np.where((lat==latpx) & (lon==lonpx))[0]
+        col = np.where((lat==latpx) & (lon==lonpx))[1]
+        value_arr[row,col] = value_list[pixel_value_list.index(pixel)]
+        
+    for pixel in land_pixel_list:
+        (latpx,lonpx) = rwb.rowcol_to_latlon(pixel)
+        row = np.where((lat==latpx) & (lon==lonpx))[0]
+        col = np.where((lat==latpx) & (lon==lonpx))[1]
+        land_arr[row,col] = -9999
+
+    plt.figure(figsize=(9,6))
+    land_cmap = colors.ListedColormap(['gainsboro'])
+    plt.imshow(np.flipud(land_arr), cmap=land_cmap, zorder=0)
+    
+    segmented_cmap = plt.get_cmap(cmap, ncolors)
+    plt.imshow(np.flipud(value_arr), cmap=segmented_cmap, vmin=vmin, vmax=vmax, zorder=1)
     plt.axis('off')
     cb = plt.colorbar(fraction=0.046, pad=0.04)
     cb.set_label(cbar_label)

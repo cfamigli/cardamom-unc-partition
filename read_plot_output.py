@@ -64,7 +64,7 @@ def main():
             gr = np.nan
         
         #autil.plot_par_histograms(cbr_pixel, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model_id+'_'+pixel_chain[:-6]+'.png')    
-        #autil.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, autil.get_nofluxes_nopools_lma(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-6]+'.png')
+        #autil.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, autil.get_nofluxes_nopools_lma(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-6]+assim_type+'.png')
         
     #autil.plot_map(nrows=46, ncols=73, land_pixel_list=[file[-8:-4] for file in glob.glob(cur_dir + cbf_dir + '*.cbf')], pixel_value_list=pixels, value_list=np.ones(len(pixels)), savepath=cur_dir+plot_dir+'maps/', title='test_pixels.png')
     autil.plot_map(nrows=46, ncols=73, land_pixel_list=[file[-8:-4] for file in glob.glob(cur_dir + cbf_dir + '*.cbf')], 

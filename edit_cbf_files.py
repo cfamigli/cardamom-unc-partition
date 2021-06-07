@@ -117,9 +117,10 @@ def main():
     os.chdir(infile_dir)
     files = glob.glob('*.cbf')
     
-    for file in files:
-        print(file)
-        orig = rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0])
+    for file in files[:2]:
+        print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0]))
+        print(rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0]))
+        '''orig = rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0])
         obsunc = orig['OBSUNC']
         
         cbf_longadapted = rwb.read_cbf_file(glob.glob(cur_dir+mod_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])
@@ -127,7 +128,7 @@ def main():
         
         rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_longadapted, cur_dir+outfile_dir+model_id_target+'/'+file)
         testout = rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0])
-        assert testout['OBSUNC']['NBE']['annual_unc']==0.02
+        assert testout['OBSUNC']['NBE']['annual_unc']==0.02'''
     
     
     

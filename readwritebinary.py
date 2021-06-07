@@ -47,6 +47,48 @@ def readbinarymat(filename,indims):
     
     return datamat
 
+def latlon_to_rowcol(lat,lon):
+    
+    # Vectors for code in file name
+    latspace = np.linspace(-90,90,46)
+    lonspace = np.linspace(-180,180,73)
+    
+    latidx = np.argwhere(latspace == lat)
+    lonidx = np.argwhere(lonspace == lon)
+    
+    if len(latidx) == 0 or len(lonidx) == 0:
+        rowcol = []
+        print('No point at lat = ' + str(lat) + ' or lon = ' + str(lon))
+    
+    else:
+        latnum = latidx[0][0] + 1
+        lonnum = lonidx[0][0] + 1
+        
+        if latnum < 10:
+            latstr = '0'+ str(latnum)
+        else:
+            latstr = str(latnum)
+            
+        if lonnum < 10:
+            lonstr = '0' + str(lonnum)
+        else:
+            lonstr = str(lonnum)
+        
+        rowcol = latstr+lonstr
+        
+    return rowcol
+
+def rowcol_to_latlon(rowcol_str):
+    """
+    Convert GEOCHEM rows and columns to lats and lons. Take in 4 digit string of row/col and spit out
+    """
+
+    # Vectors for code in file name
+    latspace = np.linspace(-90,90,46)
+    lonspace = np.linspace(-180,180,73)
+    lat = latspace[int(rowcol_str[0:2])-1]
+    lon = lonspace[int(rowcol_str[2:])-1]
+    return (lat,lon)
 
 
 def define_cbf_obs_fields(CBF,CBFOBS):
