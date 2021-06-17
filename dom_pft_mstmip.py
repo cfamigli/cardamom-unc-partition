@@ -64,11 +64,11 @@ def main():
         av_fracs = np.nanmean(fracs_at_geos_pixel, axis=1) # average biome fraction across mstmip pixels within coarse pixel
         dom_pft_lst.append(np.argmax(av_fracs)) # append index containing maximum of average biome fraction vector
         
-    '''autil.plot_map_discrete_cmap(nrows=46, ncols=73, land_pixel_list=pixels, pixel_value_list=pixels, value_list=dom_pft_lst, vmin=0, vmax=48, cmap='gist_stern',
-        savepath=plot_dir+'maps/', savename='dom_pft_' + model_id + assim_type+ '_MCMC' + mcmc_id + '_' + n_iter)'''
+    autil.plot_map_discrete_cmap(nrows=46, ncols=73, land_pixel_list=pixels, pixel_value_list=pixels, value_list=dom_pft_lst, vmin=0, vmax=48, cmap='gist_earth',
+        savepath=plot_dir+'maps/', savename='dom_pft_' + model_id + assim_type+ '_MCMC' + mcmc_id + '_' + n_iter)
         
     # get list of unique dominant pfts and corresponding indices
-    dom_pft_unique = np.unique(dom_pft_lst)
+    '''dom_pft_unique = np.unique(dom_pft_lst)
     inds_unique = [np.argwhere(i==dom_pft_lst).reshape(-1,) for i in np.unique(dom_pft_lst)]
     
     # initialize list that will contain aggregated parameter sets for each dominant pft
@@ -103,7 +103,7 @@ def main():
         assert len(meds)==len(parnames)
         dom_pft_median_pars.append(meds)
         
-    print(dom_pft_median_pars)
+    print(dom_pft_median_pars)'''
             
         
     return

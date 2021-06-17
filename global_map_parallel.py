@@ -22,7 +22,7 @@ def main():
     run_type = sys.argv[2] # ALL or SUBSET
     mcmc_id = sys.argv[3] # 119 for normal, 3 for DEMCMC
     n_iter = sys.argv[4]
-    var_to_plot = sys.argv[5] # GR, or a flux or pool
+    var_to_plot = sys.argv[5] # GR, a flux or pool, or PARXX
     ens_size = 500
     assim_type = '_longadapted'
     
@@ -73,6 +73,12 @@ def main():
     ### DETERMINE DATA TO WRITE TO FILE
     if var_to_plot == 'GR':
         data = np.copy(gr_pixel)
+    elif 'PAR' in var_to_plot:
+        parnum = int(var_to_plot.partition('PAR')[-1])
+        if gr_pixel>0.9:
+            data = np.nanmedian(cbr_pixel[:,parnum-1])
+        else:
+            data = -9999.
     else:
         if gr_pixel>0.9:
             data = np.nanmean(np.nanmedian(autil.get_output(var_to_plot, model_id, flux_pixel, pool_pixel, cbr_pixel, autil.get_nofluxes_nopools_lma(model_id)[2]), axis=0))

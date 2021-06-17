@@ -26,7 +26,7 @@ def main():
     os.chdir(cbr_dir)
     #files = glob.glob('*.cbr')#sample(glob.glob('*.cbr'), 10)
     files = glob.glob('*MCMC'+mcmc_id+'_'+n_iter+'_*.cbr')
-    pixels = list(set([file[-10:-6] for file in files]))
+    pixels = list(set([file[-10:-6] for file in files])) if run_type=='ALL' else ['3809','3524','2224','4170','1945','3813','4054','3264','1271','3457']
     
     gr_pixels = np.zeros(len(pixels))*np.nan # list of GR for each pixel, for mapping
     for pixel in pixels:
@@ -64,7 +64,7 @@ def main():
             gr = np.nan
         
         #autil.plot_par_histograms(cbr_pixel, parnames=parnames, savepath=cur_dir+plot_dir+'dists/', title=model_id+'_'+pixel_chain[:-6]+'.png')    
-        #autil.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, autil.get_nofluxes_nopools_lma(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-6]+assim_type+'.png')
+        autil.plot_flux_pool_timeseries(cbf_pixel, cbr_pixel, flux_pixel, pool_pixel, autil.get_nofluxes_nopools_lma(model_id)[2], savepath=cur_dir+plot_dir+'timeseries/', title=model_id+'_'+pixel_chain[:-6]+assim_type+'.png')
         
     #autil.plot_map(nrows=46, ncols=73, land_pixel_list=[file[-8:-4] for file in glob.glob(cur_dir + cbf_dir + '*.cbf')], pixel_value_list=pixels, value_list=np.ones(len(pixels)), savepath=cur_dir+plot_dir+'maps/', title='test_pixels.png')
     autil.plot_map(nrows=46, ncols=73, land_pixel_list=[file[-8:-4] for file in glob.glob(cur_dir + cbf_dir + '*.cbf')], 

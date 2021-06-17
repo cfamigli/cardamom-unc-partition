@@ -23,28 +23,36 @@ def select_cbf_files(all_filenames, pixel_list):
     return reduced_list
 
 def main():
+    
+    # get specifications from the user
     model_id = sys.argv[1]
     run_type = sys.argv[2] # ALL or SUBSET
     mcmc_id = sys.argv[3] # 119 for normal, 3 for DEMCMC
     assim_type = '_longadapted'
+    nbe_optimization = sys.argv[4] # 'OFF' or 'ON'
     
+    n_iterations = sys.argv[5]
+    runtime_assim = int(sys.argv[6])
+    n_chains = int(sys.argv[7])
+    separate_chains = sys.argv[8] # 0 or 1
+    chain_num = '_' + sys.argv[9] if int(separate_chains)==True else ''
+    
+    
+    # set all directories
     cur_dir = os.getcwd()
-    mdf_dir = '../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_MDF/'
-    runmodel_dir = '../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_GENERAL/'
+    mdf_dir = '../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_MDF/' if nbe_optimization=='OFF' else '../code/CARDAMOM_Uma_2.1.6c-master/C/projects/CARDAMOM_MDF/'
+    runmodel_dir = '../code/CARDAMOM_2.1.6c/C/projects/CARDAMOM_GENERAL/' if nbe_optimization=='OFF' else '../code/CARDAMOM_Uma_2.1.6c-master/C/projects/CARDAMOM_GENERAL/'
     cbf_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf'+assim_type+'/' + model_id + '/'
     cbr_dir = '../../../../../scratch/users/cfamigli/cardamom/files/cbr'+assim_type+'/' + model_id + '/'
     output_dir = '../../../../../scratch/users/cfamigli/cardamom/files/output'+assim_type+'/' + model_id + '/'
-    
-    n_iterations = sys.argv[4]
-    runtime_assim = int(sys.argv[5])
-    n_chains = int(sys.argv[6])
-    separate_chains = sys.argv[7]
-    chain_num = '_' + sys.argv[8] if separate_chains==True else ''
         
+        
+    # set number of ensembles to save out
     if mcmc_id=='119':
         frac_save_out = str(int(int(n_iterations)/500))
     elif mcmc_id=='3':
         frac_save_out = str(int(int(n_iterations)/500*100)) # n_iterations/ frac_save_out * 100 will be ensemble size
+    
     
     # select which pixels to submit
     os.chdir(cbf_dir)
@@ -56,8 +64,9 @@ def main():
         cbf_files = select_cbf_files(glob.glob('*.cbf'), ['3809','3524','2224','4170','1945','3813','4054','3264','1271','3457'])
     os.chdir(cur_dir + '/../')
        
+       
     # create separate assimilation and forward submission files for each separate chain 
-    if separate_chains==True:
+    if int(separate_chains)==True:
         assim_txt_filename = 'assimilation_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
         assim_txt_file = open(assim_txt_filename, 'w')
         
@@ -79,6 +88,7 @@ def main():
         forward_sh_file = open(forward_txt_filename[:-3] + 'sh', 'w')
         autil.fill_in_sh(forward_sh_file, array_size=len(cbf_files)*n_chains, n_hours=1, txt_file=forward_txt_filename)
     
+    
     # create one combined submission file with all assimilation and forward commands for each pixel's chain on one line
     else:
         txt_filename = 'combined_assim_forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + '.txt'
@@ -96,7 +106,7 @@ def main():
         txt_file.close()
         
         sh_file = open(txt_filename[:-3] + 'sh', 'w')
-        autil.fill_in_sh(sh_file, array_size=len(cbf_files), n_hours=runtime_assim, txt_file=txt_filename)
+        autil.fill_in_sh(sh_file, array_size=len(cbf_files), n_hours=runtime_assim, txt_file=txt_filename, combined=True)
     
     return
 

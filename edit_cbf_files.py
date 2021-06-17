@@ -117,9 +117,16 @@ def main():
     os.chdir(infile_dir)
     files = glob.glob('*.cbf')
     
-    for file in files[:2]:
+    for file in files[0]:
         print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0]))
-        print(rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0]))
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0]))
+        
+        '''orig = rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])
+        print(glob.glob(cur_dir+outfile_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])
+        orig['ID'] = model_id_target
+        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(orig, cur_dir+outfile_dir+model_id_target+'/'+file)'''
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0]))
+        
         '''orig = rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0])
         obsunc = orig['OBSUNC']
         
