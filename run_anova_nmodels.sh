@@ -1,14 +1,13 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH -p konings,normal,owners
-#SBATCH -t 2:00:00
-#SBATCH --begin=now+3hours
+#SBATCH -t 1:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=cfamigli@stanford.edu
-#SBATCH --array=0-1
+#SBATCH --array=0-9
 
 # define the location of the command list file
-CMD_LIST=./read_plot_output.txt
+CMD_LIST=./run_anova_nmodels.txt
 
 # get the command list index from Slurm
 CMD_INDEX=$SLURM_ARRAY_TASK_ID

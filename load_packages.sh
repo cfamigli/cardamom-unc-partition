@@ -6,3 +6,5 @@ ml load py-numpy/1.18.1_py36
 ml load py-pandas/1.0.3_py36
 ml load py-matplotlib/3.2.1_py36
 ml load py-scipy/1.4.1_py36
+ml load py-scikit-learn/0.24.2_py36
+ml load py-netcdf4/1.3.1_py36

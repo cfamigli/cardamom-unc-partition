@@ -1,0 +1,2 @@
+python3 rmse_regional_comparison.py 811
+python3 rmse_regional_comparison.py 911
