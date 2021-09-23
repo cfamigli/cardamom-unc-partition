@@ -1,10 +1,11 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH -p konings,normal,owners
-#SBATCH -t 1:00:00
+#SBATCH -t 2:00:00
+#SBATCH --begin=now+3hours
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=cfamigli@stanford.edu
-#SBATCH --array=0-8
+#SBATCH --array=0-1
 
 # define the location of the command list file
 CMD_LIST=./read_plot_output.txt

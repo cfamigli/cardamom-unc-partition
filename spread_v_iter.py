@@ -21,10 +21,10 @@ def main():
     model_id_start = sys.argv[1]
     run_type = sys.argv[2] # ALL or SUBSET
     metric = sys.argv[3] # spread or RMSE
-    assim_type = '_longadapted'
-    compare_between = sys.argv[4] # MCMCID or MODEL
+    assim_type = '_p25adapted'
+    compare_between = sys.argv[4] # MCMCID or MODEL or NBEUNC
     
-    n_iters = [['40000000'],['40000000']]#[['100000', '250000', '500000', '1000000', '1750000', '2500000', '5000000'], ['100000', '250000', '500000', '1000000', '5000000', '10000000', '25000000','50000000']]
+    n_iters = [['40000000'],['40000000']]#['500000','1000000','2500000','5000000','10000000'],['40000000']]#[['100000', '250000', '500000', '1000000', '1750000', '2500000', '5000000'], ['100000', '250000', '500000', '1000000', '5000000', '10000000', '25000000','50000000']]
     vrs = ['NBE','cumNBE','LAI','GPP','Reco','Rauto','Rhet','lit','root','som','wood']
     pixels = ['3809','3524','2224','4170','1945','3813','4054','3264','1271','3457']
     
@@ -40,6 +40,10 @@ def main():
     
     elif compare_between=='MODEL':
         comps = [model_id_start, '911']
+        mcmc_id = '119'
+        
+    elif compare_between=='NBEUNC':
+        comps = [assim_type, '_p25adapted_NBEuncreduced']
         mcmc_id = '119'
 
     ens_spread = [np.ones((len(pixels), len(vrs), len(n_iters[0])))*float('nan'), np.ones((len(pixels), len(vrs), len(n_iters[1])))*float('nan')]
@@ -57,6 +61,14 @@ def main():
                 output_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/output'+assim_type+'/' + comp + '/'
                 plot_dir = '../../../../../../scratch/users/cfamigli/cardamom/plots/'
                 parnames = autil.get_parnames(cur_dir+'../../misc/', comp)
+            elif compare_between=='NBEUNC':
+                assim_type = comp
+                cbf_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf'+comp+'/' + model_id_start + '/'
+                cbr_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbr'+comp+'/' + model_id_start + '/'
+                output_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/output'+comp+'/' + model_id_start + '/'
+                plot_dir = '../../../../../../scratch/users/cfamigli/cardamom/plots/'
+                parnames = autil.get_parnames(cur_dir+'../../misc/', model_id_start)
+                
             
             os.chdir(cur_dir+cbr_dir) 
             for it in n_iters[comps.index(comp)]:
@@ -111,8 +123,10 @@ def main():
                         lb = np.nanpercentile(fwd_data, 25, axis=0)
                         
                         ens_spread[comps.index(comp)][pixels.index(pixel), vrs.index(var), n_iters[comps.index(comp)].index(it)] = np.nanmean(abs(ub - lb)) if metric=='spread' else np.sqrt(np.nansum((med-obs)**2)/n_obs)
-                    
-    for var in vrs:        
+                        print(ens_spread[comps.index(comp)][pixels.index(pixel), vrs.index(var), n_iters[comps.index(comp)].index(it)])
+          
+    print(ens_spread)          
+    for var in vrs:    
         autil.plot_spread_v_iter(ens_spread, pixels, vrs.index(var), var, n_iters, metric, cur_dir+plot_dir+'spread_v_iter', 'iter_test'+assim_type+'_'+compare_between+'_'+model_id_start+'_'+var + '_' + metric, single_val=True)#'iter_test_MCMC'+mcmc_id+'_'+model_id_start+'_'+var + '_' + metric)
         
     autil.plot_conv_v_iter(conv, pixels, n_iters, cur_dir+plot_dir+'spread_v_iter', 'iter_test'+assim_type+'_'+compare_between+'_'+model_id_start + '_conv', single_val=True)

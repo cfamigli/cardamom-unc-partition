@@ -391,7 +391,10 @@ def read_cbr_file(filename,INFO):
     
     PARS = BD.reshape(dims)
     
-    return PARS
+    # throw firsthalf
+    middle = int(np.ceil(PARS.shape[0]/2))
+    
+    return PARS[middle:,:]
 
 
 def write_cbr_file(PARS, outfilename):

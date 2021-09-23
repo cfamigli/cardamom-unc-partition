@@ -28,7 +28,7 @@ def main():
     model_id = sys.argv[1]
     run_type = sys.argv[2] # ALL or SUBSET
     mcmc_id = sys.argv[3] # 119 for normal, 3 for DEMCMC
-    assim_type = '_longadapted'
+    assim_type = '_p25adapted'
     nbe_optimization = sys.argv[4] # 'OFF' or 'ON'
     
     n_iterations = sys.argv[5]
@@ -67,10 +67,10 @@ def main():
        
     # create separate assimilation and forward submission files for each separate chain 
     if int(separate_chains)==True:
-        assim_txt_filename = 'assimilation_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
+        assim_txt_filename = 'assimilation_list_' + model_id + '_' + run_type  + assim_type+'_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
         assim_txt_file = open(assim_txt_filename, 'w')
         
-        forward_txt_filename = 'forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
+        forward_txt_filename = 'forward_list_' + model_id + '_' + run_type  + assim_type+'_MCMC'+mcmc_id + '_'+n_iterations + chain_num+ '.txt'
         forward_txt_file = open(forward_txt_filename, 'w')
         for cbf_file in cbf_files:
              for chain in range(1,n_chains+1):
@@ -91,7 +91,7 @@ def main():
     
     # create one combined submission file with all assimilation and forward commands for each pixel's chain on one line
     else:
-        txt_filename = 'combined_assim_forward_list_' + model_id + '_' + run_type  + '_MCMC'+mcmc_id + '_'+n_iterations + '.txt'
+        txt_filename = 'combined_assim_forward_list_' + model_id + '_' + run_type  + assim_type+ '_MCMC'+mcmc_id + '_'+n_iterations + '.txt'
         txt_file = open(txt_filename, 'w')
         
         for cbf_file in cbf_files:

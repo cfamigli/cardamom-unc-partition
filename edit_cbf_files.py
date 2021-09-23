@@ -79,7 +79,7 @@ def edit_101(infile, outfile, ID, inds_shift, inds_del):
     cbf['MET'] = cbf['MET'][:,:-2]
     '''cbf['MET'][:,6] = 0
     cbf['OTHER_OBS']['MFire']['mean'] = -9999
-    cbf['OTHER_OBS']['MFire']['unc'] = -9999'''
+    cbf['OTHER_OBS']['MFire']['unc'] = -9999''' 
     count_real = 0
     for parprior, parpriorunc in zip(cbf['PARPRIORS'], cbf['PARPRIORUNC']):
         if parprior==-9999:
@@ -103,23 +103,86 @@ def edit_101(infile, outfile, ID, inds_shift, inds_del):
 def retrieve_nbe_unc(unc_mat, rowcol_mat, rowcol_pix):
     return unc_mat[rowcol_mat==rowcol_pix]
 
-def main():
+def main(): 
     model_id_start = sys.argv[1]
     model_id_target = sys.argv[2]
     
     cur_dir = os.getcwd() + '/'
-    infile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longruns/cbf/'
+    infile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_p25adapted/'
     compare_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf/'
     
     mod_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longadapted_wrongobsunc/'
-    outfile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_longadapted/'
+    outfile_dir = '../../../../../../scratch/users/cfamigli/cardamom/files/cbf_p25adapted_NBEuncreduced/'
     
-    os.chdir(infile_dir)
+    os.chdir(infile_dir+model_id_target+'/')
     files = glob.glob('*.cbf')
-    
-    for file in files[0]:
-        print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0]))
+    files.sort()
+     
+    for file in files:
+        print(file)
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+model_id_target+'/*'+file[-8:-4]+'*.cbf')[0]))
         #print(rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0]))
+        
+        '''cbf_orig = rwb.read_cbf_file(file)
+        print(cbf_orig['OBSUNC']['NBE']['seasonal_unc']) 
+        cbf_out = copy.deepcopy(cbf_orig)
+        cbf_out['OBSUNC']['NBE']['seasonal_unc'] = 1.5
+        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)
+        print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/'+file)[0])['OBSUNC']['NBE']['seasonal_unc'])'''
+        
+        '''print(file)
+        
+        cbf_orig = rwb.read_cbf_file(glob.glob(cur_dir+infile_dir+'/*'+file[-8:-4]+'*.cbf')[0])
+        cbf_out = copy.deepcopy(cbf_orig)
+        cbf_out['ID'] = model_id_target
+        
+        if int(model_id_target)<=400:
+            cbf_out['MET'] = cbf_out['MET'][:,:7]
+            cbf_out['nomet'] = cbf_out['MET'].shape[1]
+            
+        parprior = cbf_out['PARPRIORS']
+        parpriorunc = cbf_out['PARPRIORUNC']
+
+        parpriorout = np.ones(parprior.shape)*-9999.
+        parprioruncout = np.ones(parpriorunc.shape)*-9999.
+        
+        if int(model_id_target)>102:
+            if (int(model_id_target)==900) | (int(model_id_target)==901):
+                parpriorout[1] = parprior[1]
+                parpriorout[10] = 17.5
+                
+                parprioruncout[1] = parpriorunc[1]
+                parprioruncout[10] = 1.5
+                
+            else:
+                parpriorout[1] = parprior[1]
+                parpriorout[10] = 17.5
+                parpriorout[11] = parprior[10]
+                parpriorout[14] = parprior[13]
+                
+                parprioruncout[1] = parpriorunc[1]
+                parprioruncout[10] = 1.5
+                parprioruncout[11] = parpriorunc[10]
+                parprioruncout[14] = parpriorunc[13]
+        else:
+            parpriorout[1] = parprior[1]
+            parpriorout[4] = 17.5
+            parpriorout[5] = parprior[10]
+            parpriorout[8] = parprior[13]
+            
+            parprioruncout[1] = parpriorunc[1]
+            parprioruncout[4] = 1.5
+            parprioruncout[5] = parpriorunc[10]
+            parprioruncout[8] = parpriorunc[13]
+            
+        cbf_out['PARPRIORS'] = parpriorout
+        cbf_out['PARPRIORUNC'] = parprioruncout
+        
+        rwb.CARDAMOM_WRITE_BINARY_FILEFORMAT(cbf_out, cur_dir+outfile_dir+model_id_target+'/'+file)'''
+        #print(rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_target+'/'+file)[0]))
+        
+        ####################################################################################
+        ####################################################################################
         
         '''orig = rwb.read_cbf_file(glob.glob(cur_dir+outfile_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])
         print(glob.glob(cur_dir+outfile_dir+model_id_start+'/*'+file[-8:-4]+'*.cbf')[0])
